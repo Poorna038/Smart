@@ -6,3 +6,4 @@ httpx
 pillow
 pytesseract
 PyMuPDF
+python-dox
