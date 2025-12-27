@@ -10,12 +10,11 @@ import uuid
 import fitz  # PyMuPDF
 import pytesseract
 from PIL import Image
-import os
 
 app = FastAPI()
 
-# ---------------- CORS (NETLIFY FRONTEND) ----------------
-
+# ---------------- CORS ----------------
+# Allow Netlify frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -25,9 +24,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------- CONSTANTS ----------------
-
-LIBRE_TRANSLATE_URL = "https://libretranslate.de/translate"
+# ---------------- TRANSLATION FALLBACK SERVERS ----------------
+LIBRE_TRANSLATE_URLS = [
+    "https://translate.astian.org/translate",
+    "https://libretranslate.com/translate",
+    "https://libretranslate.de/translate"
+]
 
 # ---------------- MODELS ----------------
 
@@ -43,7 +45,7 @@ class TranslateRequest(BaseModel):
 
 @app.get("/")
 def root():
-    return {"status": "Backend running fine on Render 🚀"}
+    return {"status": "SmartLingua backend running on Render 🚀"}
 
 # ---------------- TEXT TO SPEECH ----------------
 
@@ -61,22 +63,28 @@ def get_audio(filename: str):
 
 @app.post("/translate")
 async def translate_text(data: TranslateRequest):
-    async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.post(
-            LIBRE_TRANSLATE_URL,
-            json={
-                "q": data.text,
-                "source": "auto",
-                "target": data.target,
-                "format": "text"
-            }
-        )
+    for url in LIBRE_TRANSLATE_URLS:
+        try:
+            async with httpx.AsyncClient(timeout=20) as client:
+                response = await client.post(
+                    url,
+                    json={
+                        "q": data.text,
+                        "source": "auto",
+                        "target": data.target,
+                        "format": "text"
+                    }
+                )
 
-    try:
-        result = response.json()
-        return {"translated": result["translatedText"]}
-    except Exception:
-        return {"translated": "", "error": "Translation failed"}
+            if response.status_code == 200:
+                result = response.json()
+                if "translatedText" in result:
+                    return {"translated": result["translatedText"]}
+
+        except Exception:
+            continue
+
+    return {"error": "Translation service unavailable. Please try again later."}
 
 # ---------------- DOCUMENT TRANSLATION ----------------
 
@@ -115,19 +123,28 @@ async def translate_document(
         return {"error": "Unsupported file format"}
 
     if not text.strip():
-        return {"error": "No readable text found"}
+        return {"error": "No readable text found in document"}
 
-    # ---------- TRANSLATE ----------
-    async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(
-            LIBRE_TRANSLATE_URL,
-            json={
-                "q": text,
-                "source": "auto",
-                "target": target,
-                "format": "text"
-            }
-        )
+    # ---------- TRANSLATE WITH FALLBACK ----------
+    for url in LIBRE_TRANSLATE_URLS:
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                response = await client.post(
+                    url,
+                    json={
+                        "q": text,
+                        "source": "auto",
+                        "target": target,
+                        "format": "text"
+                    }
+                )
 
-    result = response.json()
-    return {"translated": result.get("translatedText", "")}
+            if response.status_code == 200:
+                result = response.json()
+                if "translatedText" in result:
+                    return {"translated": result["translatedText"]}
+
+        except Exception:
+            continue
+
+    return {"error": "Document translation failed. Try again later."}
