@@ -1,0 +1,205 @@
+/* ================= ROOT VARIABLES ================= */
+:root {
+  --beige: #f4f1ec;
+  --grey-bg: #f7f7f7;
+  --card: #ffffff;
+
+  --text-dark: #1f1f1f;
+  --text-muted: #6f6f6f;
+
+  --turquoise: #63c7be;
+  --turquoise-dark: #3aa6a0;
+
+  --border: #e5e5e5;
+}
+
+/* ================= GLOBAL ================= */
+* {
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--beige);
+  color: var(--text-dark);
+}
+
+/* ================= NAVBAR ================= */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 60px;
+  background: var(--beige);
+}
+
+.logo {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--turquoise-dark);
+}
+
+.nav a {
+  margin-left: 32px;
+  text-decoration: none;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.nav a:hover {
+  color: var(--turquoise-dark);
+}
+
+/* ================= PAGE LAYOUT ================= */
+.page {
+  padding: 10px 100px;
+}
+
+/* ================= HERO ================= */
+.hero {
+  max-width: 900px;
+}
+
+.hero h1 {
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 20px;
+}
+
+.hero p {
+  font-size: 18px;
+  color: var(--text-muted);
+  max-width: 600px;
+}
+
+.hero-actions {
+  margin-top: 40px;
+  
+}
+
+/* ================= BUTTONS ================= */
+.btn {
+  padding: 14px 30px;
+  border-radius: 40px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.25s ease;
+  
+}
+
+.btn.primary {
+  background: var(--turquoise);
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: var(--turquoise-dark);
+}
+
+.btn.secondary {
+  background: transparent;
+  border: 1.5px solid var(--turquoise);
+  color: var(--turquoise-dark);
+}
+
+.btn.secondary:hover {
+  background: rgba(99, 199, 190, 0.12);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ================= SECTIONS ================= */
+.section {
+  margin-top: 50px;
+}
+
+/* ================= GRID ================= */
+.convert-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+}
+
+/* ================= CARD ================= */
+.card {
+  background: var(--card);
+  padding: 32px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--turquoise-dark);
+}
+
+/* ================= INPUTS ================= */
+textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  font-size: 15px;
+  resize: vertical;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: var(--turquoise);
+}
+
+select,
+input[type="file"] {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: #fafafa;
+  font-size: 14px;
+}
+
+select:focus,
+input[type="file"]:focus {
+  border-color: var(--turquoise);
+}
+
+/* ================= AUDIO ================= */
+audio {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* ================= DIVIDER ================= */
+.card hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 18px 0;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 900px) {
+  .page {
+    padding: 50px 24px;
+  }
+
+  .convert-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .hero h1 {
+    font-size: 40px;
+  }
+}
