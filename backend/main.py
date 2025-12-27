@@ -7,25 +7,21 @@ from docx import Document
 import io
 import httpx
 import uuid
-import fitz  # PyMuPDF
+import fitz
 import pytesseract
 from PIL import Image
 
 app = FastAPI()
 
 # ---------------- CORS ----------------
-# Allow your Netlify frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://smartlingua.netlify.app"
-    ],
+    allow_origins=["https://smartlingua.netlify.app"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ---------------- MODELS ----------------
-
 class TTSRequest(BaseModel):
     text: str
     lang: str = "en"
@@ -34,14 +30,12 @@ class TranslateRequest(BaseModel):
     text: str
     target: str
 
-# ---------------- HEALTH CHECK ----------------
-
+# ---------------- HEALTH ----------------
 @app.get("/")
 def root():
-    return {"status": "SmartLingua backend running successfully 🚀"}
+    return {"status": "SmartLingua backend running 🚀"}
 
 # ---------------- TEXT TO SPEECH ----------------
-
 @app.post("/text-to-speech")
 def text_to_speech(data: TTSRequest):
     filename = f"{uuid.uuid4()}.mp3"
@@ -52,8 +46,7 @@ def text_to_speech(data: TTSRequest):
 def get_audio(filename: str):
     return FileResponse(filename, media_type="audio/mpeg")
 
-# ---------------- TEXT TRANSLATION (MyMemory – STABLE) ----------------
-
+# ---------------- TEXT TRANSLATION (MyMemory – FIXED) ----------------
 @app.post("/translate")
 async def translate_text(data: TranslateRequest):
     try:
@@ -62,8 +55,9 @@ async def translate_text(data: TranslateRequest):
                 "https://api.mymemory.translated.net/get",
                 params={
                     "q": data.text,
-                    "langpair": f"auto|{data.target}",  # auto-detect source
-                    "de": "smartlingua@example.com"     # REQUIRED for cloud
+                    # IMPORTANT: source MUST be explicit
+                    "langpair": f"en|{data.target}",
+                    "de": "smartlingua@example.com"
                 }
             )
 
@@ -75,11 +69,10 @@ async def translate_text(data: TranslateRequest):
 
         return {"translated": translated}
 
-    except Exception:
+    except Exception as e:
         return {"error": "Translation service unavailable"}
 
 # ---------------- DOCUMENT TRANSLATION ----------------
-
 @app.post("/translate-document")
 async def translate_document(
     file: UploadFile = File(...),
@@ -87,17 +80,14 @@ async def translate_document(
 ):
     text = ""
 
-    # ---------- TXT ----------
     if file.filename.endswith(".txt"):
         content = await file.read()
         text = content.decode("utf-8")
 
-    # ---------- DOCX ----------
     elif file.filename.endswith(".docx"):
         doc = Document(file.file)
         text = "\n".join(p.text for p in doc.paragraphs)
 
-    # ---------- PDF ----------
     elif file.filename.endswith(".pdf"):
         pdf_data = await file.read()
         pdf = fitz.open(stream=pdf_data, filetype="pdf")
@@ -115,16 +105,15 @@ async def translate_document(
         return {"error": "Unsupported file format"}
 
     if not text.strip():
-        return {"error": "No readable text found in document"}
+        return {"error": "No readable text found"}
 
-    # ---------- TRANSLATE DOCUMENT ----------
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             res = await client.get(
                 "https://api.mymemory.translated.net/get",
                 params={
                     "q": text,
-                    "langpair": f"auto|{target}",
+                    "langpair": f"en|{target}",
                     "de": "smartlingua@example.com"
                 }
             )
