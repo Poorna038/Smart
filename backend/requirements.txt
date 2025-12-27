@@ -3,7 +3,7 @@ uvicorn
 python-multipart
 gtts
 httpx
+python-docx
 pillow
 pytesseract
 PyMuPDF
-python-dox

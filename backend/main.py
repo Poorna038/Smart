@@ -1,25 +1,33 @@
-from fastapi import FastAPI , UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from gtts import gTTS
 from docx import Document
-from PyPDF2 import PdfReader
 import io
 import httpx
 import uuid
-import fitz
+import fitz  # PyMuPDF
 import pytesseract
 from PIL import Image
+import os
 
 app = FastAPI()
 
+# ---------------- CORS (NETLIFY FRONTEND) ----------------
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://smartlingua.netlify.app"
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ---------------- CONSTANTS ----------------
+
+LIBRE_TRANSLATE_URL = "https://libretranslate.de/translate"
 
 # ---------------- MODELS ----------------
 
@@ -30,6 +38,12 @@ class TTSRequest(BaseModel):
 class TranslateRequest(BaseModel):
     text: str
     target: str
+
+# ---------------- HEALTH CHECK ----------------
+
+@app.get("/")
+def root():
+    return {"status": "Backend running fine on Render 🚀"}
 
 # ---------------- TEXT TO SPEECH ----------------
 
@@ -43,13 +57,13 @@ def text_to_speech(data: TTSRequest):
 def get_audio(filename: str):
     return FileResponse(filename, media_type="audio/mpeg")
 
-# ---------------- TRANSLATION (SAFE + STABLE) ----------------
+# ---------------- TEXT TRANSLATION ----------------
 
 @app.post("/translate")
 async def translate_text(data: TranslateRequest):
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post(
-            "http://localhost:5000/translate",
+            LIBRE_TRANSLATE_URL,
             json={
                 "q": data.text,
                 "source": "auto",
@@ -62,17 +76,9 @@ async def translate_text(data: TranslateRequest):
         result = response.json()
         return {"translated": result["translatedText"]}
     except Exception:
-        return {
-            "translated": "",
-            "error": "LibreTranslate did not respond"
-        }
+        return {"translated": "", "error": "Translation failed"}
 
-# ---------------- HEALTH CHECK ----------------
-
-@app.get("/")
-def root():
-    return {"status": "Backend running fine on Python 3.13 🚀"}
-
+# ---------------- DOCUMENT TRANSLATION ----------------
 
 @app.post("/translate-document")
 async def translate_document(
@@ -98,12 +104,9 @@ async def translate_document(
 
         for page in pdf:
             page_text = page.get_text()
-
-            # If text exists → normal PDF
             if page_text.strip():
                 text += page_text
             else:
-                # OCR for scanned PDF
                 pix = page.get_pixmap()
                 img = Image.open(io.BytesIO(pix.tobytes("png")))
                 text += pytesseract.image_to_string(img)
@@ -112,12 +115,12 @@ async def translate_document(
         return {"error": "Unsupported file format"}
 
     if not text.strip():
-        return {"error": "No readable text found in document"}
+        return {"error": "No readable text found"}
 
     # ---------- TRANSLATE ----------
     async with httpx.AsyncClient(timeout=60) as client:
         response = await client.post(
-            "http://127.0.0.1:5000/translate",
+            LIBRE_TRANSLATE_URL,
             json={
                 "q": text,
                 "source": "auto",
