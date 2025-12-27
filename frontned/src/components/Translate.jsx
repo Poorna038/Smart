@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const API = "https://smart-gqig.onrender.com";
+
 export default function Translate() {
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
@@ -7,7 +9,6 @@ export default function Translate() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Document states
   const [file, setFile] = useState(null);
   const [docTranslated, setDocTranslated] = useState("");
   const [docLoading, setDocLoading] = useState(false);
@@ -21,7 +22,7 @@ export default function Translate() {
     setError("");
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/translate", {
+      const res = await fetch(`${API}/translate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -56,13 +57,10 @@ export default function Translate() {
     formData.append("target", targetLang);
 
     try {
-      const res = await fetch(
-        "http://127.0.0.1:8000/translate-document",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const res = await fetch(`${API}/translate-document`, {
+        method: "POST",
+        body: formData,
+      });
 
       const data = await res.json();
       setDocTranslated(data.translated || "Translation failed");
@@ -74,77 +72,65 @@ export default function Translate() {
   }
 
   return (
-  <section className="page">
-    <h1>Language Translation</h1>
+    <section className="page">
+      <h1>Language Translation</h1>
 
-    <div className="section convert-grid">
-      {/* LEFT SIDE – INPUT + DOCUMENT */}
-      <div className="card">
-        <h3>Input</h3>
+      <div className="section convert-grid">
+        <div className="card">
+          <h3>Input</h3>
 
-        {/* TEXT INPUT */}
-        <textarea
-          placeholder="Type text here"
-          value={sourceText}
-          onChange={(e) => setSourceText(e.target.value)}
-        />
+          <textarea
+            placeholder="Type text here"
+            value={sourceText}
+            onChange={(e) => setSourceText(e.target.value)}
+          />
 
-        <button
-          className="btn primary"
-          onClick={handleTranslate}
-          disabled={loading}
-        >
-          {loading ? "Translating..." : "Translate Text"}
-        </button>
+          <button
+            className="btn primary"
+            onClick={handleTranslate}
+            disabled={loading}
+          >
+            {loading ? "Translating..." : "Translate Text"}
+          </button>
 
-        <hr />
+          <hr />
 
-        {/* DOCUMENT UPLOAD */}
-        <h4 style={{ marginTop: "10px" }}>Upload Document</h4>
+          <h4>Upload Document</h4>
+          <input
+            type="file"
+            accept=".txt,.pdf,.docx"
+            onChange={(e) => setFile(e.target.files[0])}
+          />
 
-        <input
-          type="file"
-          accept=".txt,.pdf,.docx"
-          onChange={(e) => setFile(e.target.files[0])}
-        />
+          <button
+            className="btn secondary"
+            onClick={handleDocumentTranslate}
+            disabled={docLoading}
+          >
+            {docLoading ? "Translating..." : "Translate Document"}
+          </button>
+        </div>
 
-        <button
-          className="btn secondary"
-          onClick={handleDocumentTranslate}
-          disabled={docLoading}
-        >
-          {docLoading ? "Translating..." : "Translate Document"}
-        </button>
+        <div className="card">
+          <h3>Translated Output</h3>
+
+          <select
+            value={targetLang}
+            onChange={(e) => setTargetLang(e.target.value)}
+          >
+            <option value="fr">French</option>
+            <option value="es">Spanish</option>
+            <option value="de">German</option>
+            <option value="hi">Hindi</option>
+          </select>
+
+          <textarea
+            value={translatedText || docTranslated}
+            readOnly
+            placeholder="Translated text appears here"
+          />
+        </div>
       </div>
-
-      {/* RIGHT SIDE – OUTPUT */}
-      <div className="card">
-        <h3>Translated Output</h3>
-
-        <select
-          value={targetLang}
-          onChange={(e) => setTargetLang(e.target.value)}
-        >
-          <option value="fr">French</option>
-          <option value="es">Spanish</option>
-          <option value="de">German</option>
-          <option value="hi">Hindi</option>
-          
-        </select>
-
-        <textarea
-          placeholder={
-            loading || docLoading
-              ? "Translating..."
-              : error
-              ? error
-              : "Translated text appears here"
-          }
-          value={translatedText || docTranslated}
-          readOnly
-        />
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
 }

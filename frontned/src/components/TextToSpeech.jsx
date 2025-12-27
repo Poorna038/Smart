@@ -1,6 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
 
+const API = "https://smart-gqig.onrender.com";
+
 export default function TextToSpeech() {
   const [text, setText] = useState("");
   const [file, setFile] = useState(null);
@@ -20,30 +22,31 @@ export default function TextToSpeech() {
     try {
       let finalText = text;
 
-      // ---------- DOCUMENT TRANSLATION ----------
+      // -------- DOCUMENT TRANSLATION --------
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("target", lang);
 
         const res = await axios.post(
-          "http://localhost:8000/translate-document",
+          `${API}/translate-document`,
           formData
         );
 
         finalText = res.data.translated;
       }
 
-      // ---------- TEXT TO SPEECH ----------
+      // -------- TEXT TO SPEECH --------
       const tts = await axios.post(
-        "http://localhost:8000/text-to-speech",
+        `${API}/text-to-speech`,
         {
           text: finalText,
-          lang: lang
+          lang: lang,
         }
       );
 
-      setAudioSrc(`http://localhost:8000/audio/${tts.data.audio}`);
+      // IMPORTANT: FULL BACKEND URL
+      setAudioSrc(`${API}/audio/${tts.data.audio}`);
     } catch (err) {
       console.error(err);
       alert("Failed to generate speech");
