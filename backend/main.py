@@ -14,7 +14,7 @@ from PIL import Image
 app = FastAPI()
 
 # ---------------- CORS ----------------
-# Allow Netlify frontend
+# Allow your Netlify frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -23,13 +23,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ---------------- TRANSLATION FALLBACK SERVERS ----------------
-LIBRE_TRANSLATE_URLS = [
-    "https://translate.astian.org/translate",
-    "https://libretranslate.com/translate",
-    "https://libretranslate.de/translate"
-]
 
 # ---------------- MODELS ----------------
 
@@ -45,7 +38,7 @@ class TranslateRequest(BaseModel):
 
 @app.get("/")
 def root():
-    return {"status": "SmartLingua backend running on Render 🚀"}
+    return {"status": "SmartLingua backend running successfully 🚀"}
 
 # ---------------- TEXT TO SPEECH ----------------
 
@@ -59,32 +52,31 @@ def text_to_speech(data: TTSRequest):
 def get_audio(filename: str):
     return FileResponse(filename, media_type="audio/mpeg")
 
-# ---------------- TEXT TRANSLATION ----------------
+# ---------------- TEXT TRANSLATION (MyMemory – STABLE) ----------------
 
 @app.post("/translate")
 async def translate_text(data: TranslateRequest):
-    for url in LIBRE_TRANSLATE_URLS:
-        try:
-            async with httpx.AsyncClient(timeout=20) as client:
-                response = await client.post(
-                    url,
-                    json={
-                        "q": data.text,
-                        "source": "auto",
-                        "target": data.target,
-                        "format": "text"
-                    }
-                )
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            res = await client.get(
+                "https://api.mymemory.translated.net/get",
+                params={
+                    "q": data.text,
+                    "langpair": f"auto|{data.target}",  # auto-detect source
+                    "de": "smartlingua@example.com"     # REQUIRED for cloud
+                }
+            )
 
-            if response.status_code == 200:
-                result = response.json()
-                if "translatedText" in result:
-                    return {"translated": result["translatedText"]}
+        result = res.json()
+        translated = result.get("responseData", {}).get("translatedText", "")
 
-        except Exception:
-            continue
+        if not translated:
+            return {"error": "Translation failed"}
 
-    return {"error": "Translation service unavailable. Please try again later."}
+        return {"translated": translated}
+
+    except Exception:
+        return {"error": "Translation service unavailable"}
 
 # ---------------- DOCUMENT TRANSLATION ----------------
 
@@ -125,26 +117,25 @@ async def translate_document(
     if not text.strip():
         return {"error": "No readable text found in document"}
 
-    # ---------- TRANSLATE WITH FALLBACK ----------
-    for url in LIBRE_TRANSLATE_URLS:
-        try:
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.post(
-                    url,
-                    json={
-                        "q": text,
-                        "source": "auto",
-                        "target": target,
-                        "format": "text"
-                    }
-                )
+    # ---------- TRANSLATE DOCUMENT ----------
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            res = await client.get(
+                "https://api.mymemory.translated.net/get",
+                params={
+                    "q": text,
+                    "langpair": f"auto|{target}",
+                    "de": "smartlingua@example.com"
+                }
+            )
 
-            if response.status_code == 200:
-                result = response.json()
-                if "translatedText" in result:
-                    return {"translated": result["translatedText"]}
+        result = res.json()
+        translated = result.get("responseData", {}).get("translatedText", "")
 
-        except Exception:
-            continue
+        if not translated:
+            return {"error": "Document translation failed"}
 
-    return {"error": "Document translation failed. Try again later."}
+        return {"translated": translated}
+
+    except Exception:
+        return {"error": "Document translation failed"}
