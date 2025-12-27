@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import smartai from "./smartai.png";
+
 
 export default function Home() {
   return (
@@ -25,9 +25,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="hero-image">
-          <img src={smartai} alt="SmartLingua AI" />
-        </div>
+        
       </div>
 
       <div className="section">
