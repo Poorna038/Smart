@@ -1,51 +1,28 @@
 import { useState } from "react";
-import axios from "axios";
+import API from "../api";
 
 export default function TextToSpeech() {
   const [text, setText] = useState("");
-  const [file, setFile] = useState(null);
   const [lang, setLang] = useState("en");
   const [audioSrc, setAudioSrc] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function generateSpeech() {
-    if (!text.trim() && !file) {
-      alert("Enter text or upload a document");
+    if (!text.trim()) {
+      alert("Enter text");
       return;
     }
 
     setLoading(true);
-    setAudioSrc("");
 
     try {
-      let finalText = text;
+      const res = await API.post("/ai/speech", {
+        text,
+        lang,
+      });
 
-      // ---------- DOCUMENT TRANSLATION ----------
-      if (file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("target", lang);
-
-        const res = await axios.post(
-          "http://localhost:8000/translate-document",
-          formData
-        );
-
-        finalText = res.data.translated;
-      }
-
-      // ---------- TEXT TO SPEECH ----------
-      const tts = await axios.post(
-        "http://localhost:8000/text-to-speech",
-        {
-          text: finalText,
-          lang: lang
-        }
-      );
-
-      setAudioSrc(`http://localhost:8000/audio/${tts.data.audio}`);
-    } catch (err) {
-      console.error(err);
+      setAudioSrc(res.data.audioUrl);
+    } catch {
       alert("Failed to generate speech");
     }
 
@@ -56,51 +33,23 @@ export default function TextToSpeech() {
     <section className="page">
       <h1>Text to Speech</h1>
 
-      <div className="section convert-grid">
-        <div className="card">
-          <h3>Input</h3>
+      <textarea
+        placeholder="Enter text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
 
-          <textarea
-            placeholder="Paste text here"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
+      <select value={lang} onChange={(e) => setLang(e.target.value)}>
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="fr">French</option>
+      </select>
 
-          <input
-            type="file"
-            accept=".txt,.docx,.pdf"
-            onChange={(e) => setFile(e.target.files[0])}
-            style={{ marginTop: 12 }}
-          />
-        </div>
+      <button onClick={generateSpeech} className="btn primary">
+        {loading ? "Processing..." : "Generate Speech"}
+      </button>
 
-        <div className="card">
-          <h3>Audio Output</h3>
-
-          <select value={lang} onChange={(e) => setLang(e.target.value)}>
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-            <option value="fr">French</option>
-          </select>
-
-          <button
-            className="btn primary"
-            style={{ marginTop: 20 }}
-            onClick={generateSpeech}
-            disabled={loading}
-          >
-            {loading ? "Processing..." : "Generate Speech"}
-          </button>
-
-          {audioSrc && (
-            <audio
-              controls
-              src={audioSrc}
-              style={{ marginTop: 20, width: "100%" }}
-            />
-          )}
-        </div>
-      </div>
+      {audioSrc && <audio controls src={audioSrc} />}
     </section>
   );
 }

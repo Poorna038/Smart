@@ -34,6 +34,12 @@ export default function Home() {
           AI-powered tools designed for clarity and accessibility.
         </p>
       </div>
+
+      <div className="features">
+  <div className="card">🌍 Translate Languages</div>
+  <div className="card">🔊 Text to Speech</div>
+  <div className="card">📄 Document Upload</div>
+</div>
     </section>
   );
 }
