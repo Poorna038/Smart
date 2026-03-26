@@ -3,8 +3,10 @@ const router = express.Router();
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
+const translate = require("@vitalets/google-translate-api");
+const gTTS = require("gtts");
 
-// ---------------- FILE UPLOAD SETUP ----------------
+// ---------------- FILE UPLOAD ----------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -16,9 +18,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ---------------- TEXT TRANSLATE ----------------
-const translate = require("@vitalets/google-translate-api");
-
+// ---------------- TRANSLATE ----------------
 router.post("/translate", async (req, res) => {
   try {
     const { text, target } = req.body;
@@ -27,6 +27,7 @@ router.post("/translate", async (req, res) => {
 
     res.json({ result: result.text });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Translation failed" });
   }
 });
@@ -34,23 +35,18 @@ router.post("/translate", async (req, res) => {
 // ---------------- DOCUMENT TRANSLATE ----------------
 router.post("/translate-document", upload.single("file"), async (req, res) => {
   try {
-    const filePath = req.file.path;
+    const content = fs.readFileSync(req.file.path, "utf-8");
 
-    // Read file (only works properly for .txt)
-    const content = fs.readFileSync(filePath, "utf-8");
+    const result = await translate(content, { to: req.body.target });
 
-    const translated = `Translated Document:\n${content}`;
-
-    res.json({ result: translated });
+    res.json({ result: result.text });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "File processing failed" });
   }
 });
 
 // ---------------- TEXT TO SPEECH ----------------
-const gTTS = require("gtts");
-const path = require("path");
-
 router.post("/speech", async (req, res) => {
   try {
     const { text, lang } = req.body;
@@ -80,4 +76,5 @@ router.post("/speech", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 module.exports = router;
