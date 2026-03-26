@@ -49,23 +49,35 @@ router.post("/translate-document", upload.single("file"), async (req, res) => {
 
 // ---------------- TEXT TO SPEECH ----------------
 const gTTS = require("gtts");
+const path = require("path");
 
 router.post("/speech", async (req, res) => {
   try {
     const { text, lang } = req.body;
 
-    const filename = `speech-${Date.now()}.mp3`;
-    const filepath = `uploads/${filename}`;
+    if (!text) {
+      return res.status(400).json({ error: "Text required" });
+    }
 
-    const gtts = new gTTS(text, lang);
-    gtts.save(filepath, () => {
+    const filename = `speech-${Date.now()}.mp3`;
+    const filepath = path.join(__dirname, "../uploads", filename);
+
+    const gtts = new gTTS(text, lang || "en");
+
+    gtts.save(filepath, (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "TTS failed" });
+      }
+
       res.json({
         audioUrl: `http://localhost:5000/uploads/${filename}`,
       });
     });
+
   } catch (err) {
-    res.status(500).json({ error: "Speech failed" });
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
-
 module.exports = router;
