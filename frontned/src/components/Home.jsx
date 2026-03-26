@@ -1,45 +1,58 @@
 import { Link } from "react-router-dom";
 
-
 export default function Home() {
   return (
     <section className="page">
-      <div className="hero hero-layout">
-        <div className="hero-text">
-          <h1>
-            Speak, Translate <br /> & Understand
-          </h1>
 
-          <p>
-            Convert text to speech, translate languages,
-            and upload documents or images effortlessly.
-          </p>
+      {/* HERO */}
+      <div className="hero">
+        <h1>Speak, Translate & Understand</h1>
 
-          <div className="hero-actions">
-            <Link to="/text-to-speech" className="btn primary">
-              Text to Speech
-            </Link>
-            <Link to="/translate" className="btn secondary">
-              Translate
-            </Link>
-          </div>
+        <p>
+          Convert text to speech, translate languages, and upload documents effortlessly.
+        </p>
+
+        <div className="hero-actions">
+          <Link to="/text-to-speech" className="btn primary">
+            Text to Speech
+          </Link>
+
+          <Link to="/translate" className="btn secondary">
+            Translate
+          </Link>
         </div>
-
-        
       </div>
 
-      <div className="section">
+      {/* FEATURES */}
+      <div className="features-section">
         <h2>The Capabilities</h2>
         <p className="muted">
           AI-powered tools designed for clarity and accessibility.
         </p>
+
+        <div className="features-grid">
+
+          <div className="feature-card">
+            <div className="icon">🌍</div>
+            <h3>Translate Languages</h3>
+            <p>Instantly translate text into multiple languages with high accuracy.</p>
+          </div>
+
+          <div className="feature-card">
+            <div className="icon">🔊</div>
+            <h3>Text to Speech</h3>
+            <p>Convert written content into natural-sounding speech in seconds.</p>
+          </div>
+
+          <div className="feature-card">
+            <div className="icon">📄</div>
+            <h3>Document Upload</h3>
+            <p>Upload files and translate entire documents easily.</p>
+          </div>
+
+        </div>
       </div>
 
-      <div className="features">
-  <div className="card">🌍 Translate Languages</div>
-  <div className="card">🔊 Text to Speech</div>
-  <div className="card">📄 Document Upload</div>
-</div>
     </section>
   );
 }

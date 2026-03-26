@@ -4,16 +4,10 @@ import API from "../api";
 export default function TextToSpeech() {
   const [text, setText] = useState("");
   const [lang, setLang] = useState("en");
-  const [audioSrc, setAudioSrc] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [audio, setAudio] = useState("");
 
   async function generateSpeech() {
-    if (!text.trim()) {
-      alert("Enter text");
-      return;
-    }
-
-    setLoading(true);
+    if (!text.trim()) return;
 
     try {
       const res = await API.post("/ai/speech", {
@@ -21,35 +15,35 @@ export default function TextToSpeech() {
         lang,
       });
 
-      setAudioSrc(res.data.audioUrl);
+      setAudio(res.data.audioUrl);
     } catch {
-      alert("Failed to generate speech");
+      alert("Speech failed");
     }
-
-    setLoading(false);
   }
 
   return (
     <section className="page">
       <h1>Text to Speech</h1>
 
-      <textarea
-        placeholder="Enter text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
+      <div className="tts-box">
+        <textarea
+          placeholder="Enter text..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
 
-      <select value={lang} onChange={(e) => setLang(e.target.value)}>
-        <option value="en">English</option>
-        <option value="hi">Hindi</option>
-        <option value="fr">French</option>
-      </select>
+        <select value={lang} onChange={(e) => setLang(e.target.value)}>
+          <option value="en">English</option>
+          <option value="hi">Hindi</option>
+          <option value="fr">French</option>
+        </select>
 
-      <button onClick={generateSpeech} className="btn primary">
-        {loading ? "Processing..." : "Generate Speech"}
-      </button>
+        <button onClick={generateSpeech} className="btn primary">
+          Generate Speech
+        </button>
 
-      {audioSrc && <audio controls src={audioSrc} />}
+        {audio && <audio controls src={audio} />}
+      </div>
     </section>
   );
 }

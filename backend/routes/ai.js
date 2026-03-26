@@ -17,17 +17,18 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ---------------- TEXT TRANSLATE ----------------
+const translate = require("@vitalets/google-translate-api");
+
 router.post("/translate", async (req, res) => {
-  const { text, target } = req.body;
+  try {
+    const { text, target } = req.body;
 
-  if (!text) {
-    return res.status(400).json({ error: "No text provided" });
+    const result = await translate(text, { to: target });
+
+    res.json({ result: result.text });
+  } catch (err) {
+    res.status(500).json({ error: "Translation failed" });
   }
-
-  // 🔥 MOCK AI (replace later with OpenAI)
-  const translated = `[${target}] ${text}`;
-
-  res.json({ result: translated });
 });
 
 // ---------------- DOCUMENT TRANSLATE ----------------
@@ -47,18 +48,24 @@ router.post("/translate-document", upload.single("file"), async (req, res) => {
 });
 
 // ---------------- TEXT TO SPEECH ----------------
+const gTTS = require("gtts");
+
 router.post("/speech", async (req, res) => {
-  const { text } = req.body;
+  try {
+    const { text, lang } = req.body;
 
-  if (!text) {
-    return res.status(400).json({ error: "No text provided" });
+    const filename = `speech-${Date.now()}.mp3`;
+    const filepath = `uploads/${filename}`;
+
+    const gtts = new gTTS(text, lang);
+    gtts.save(filepath, () => {
+      res.json({
+        audioUrl: `http://localhost:5000/uploads/${filename}`,
+      });
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Speech failed" });
   }
-
-  // 🔥 Mock audio (replace later with real TTS)
-  const fakeAudioUrl =
-    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
-
-  res.json({ audioUrl: fakeAudioUrl });
 });
 
 module.exports = router;

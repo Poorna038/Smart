@@ -2,122 +2,85 @@ import { useState } from "react";
 import API from "../api";
 
 export default function Translate() {
-  const [sourceText, setSourceText] = useState("");
-  const [translatedText, setTranslatedText] = useState("");
-  const [targetLang, setTargetLang] = useState("fr");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
+  const [text, setText] = useState("");
+  const [result, setResult] = useState("");
+  const [lang, setLang] = useState("es");
   const [file, setFile] = useState(null);
-  const [docTranslated, setDocTranslated] = useState("");
-  const [docLoading, setDocLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // ✅ TEXT TRANSLATION
   async function handleTranslate() {
-    if (!sourceText.trim()) return;
+    if (!text.trim()) return;
 
     setLoading(true);
-    setError("");
-    setTranslatedText("");
-
     try {
       const res = await API.post("/ai/translate", {
-        text: sourceText,
-        target: targetLang,
+        text,
+        target: lang,
       });
-
-      setTranslatedText(res.data.result);
-    } catch (err) {
-      setError("Translation failed");
+      setResult(res.data.result);
+    } catch {
+      alert("Translation failed");
     }
-
     setLoading(false);
   }
 
-  // ✅ DOCUMENT TRANSLATION
-  async function handleDocumentTranslate() {
+  async function handleFileTranslate() {
     if (!file) return;
-
-    setDocLoading(true);
-    setDocTranslated("");
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("target", targetLang);
+    formData.append("target", lang);
 
+    setLoading(true);
     try {
       const res = await API.post("/ai/translate-document", formData);
-
-      setDocTranslated(res.data.result);
+      setResult(res.data.result);
     } catch {
-      setDocTranslated("Error translating document");
+      alert("File translation failed");
     }
-
-    setDocLoading(false);
+    setLoading(false);
   }
 
   return (
     <section className="page">
       <h1>Language Translation</h1>
 
-      <div className="section convert-grid">
-        <div className="card">
+      <div className="translate-wrapper">
+        {/* LEFT */}
+        <div className="box">
           <h3>Input</h3>
 
           <textarea
-            placeholder="Type text here"
-            value={sourceText}
-            onChange={(e) => setSourceText(e.target.value)}
+            placeholder="Enter text..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
           />
 
-          <button
-            className="btn primary"
-            onClick={handleTranslate}
-            disabled={loading}
-          >
+          <button onClick={handleTranslate} className="btn primary">
             {loading ? "Translating..." : "Translate Text"}
           </button>
 
-          <hr />
-
-          <h4>Upload Document</h4>
-
-          <input
-            type="file"
-            onChange={(e) => setFile(e.target.files[0])}
-          />
-
-          <button
-            className="btn secondary"
-            onClick={handleDocumentTranslate}
-            disabled={docLoading}
-          >
-            {docLoading ? "Translating..." : "Translate Document"}
-          </button>
+          <div className="upload-box">
+            <p>Upload Document</p>
+            <input type="file" onChange={(e) => setFile(e.target.files[0])} />
+            <button onClick={handleFileTranslate} className="btn secondary">
+              Translate Document
+            </button>
+          </div>
         </div>
 
-        <div className="card">
+        {/* RIGHT */}
+        <div className="box">
           <h3>Output</h3>
 
-          <select
-            value={targetLang}
-            onChange={(e) => setTargetLang(e.target.value)}
-          >
-            <option value="fr">French</option>
+          <select value={lang} onChange={(e) => setLang(e.target.value)}>
             <option value="es">Spanish</option>
-            <option value="de">German</option>
+            <option value="fr">French</option>
             <option value="hi">Hindi</option>
+            <option value="de">German</option>
           </select>
 
-          <textarea
-            value={translatedText || docTranslated}
-            readOnly
-            placeholder={
-              loading || docLoading
-                ? "Processing..."
-                : error || "Translated text appears here"
-            }
-          />
+          <textarea value={result} readOnly />
         </div>
       </div>
     </section>
