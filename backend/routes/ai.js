@@ -71,7 +71,7 @@ router.post("/speech", async (req, res) => {
       }
 
       res.json({
-        audioUrl: `http://localhost:5000/uploads/${filename}`,
+        audioUrl: `https://smart-gqig.onrender.com/uploads/${filename}`,
       });
     });
 
