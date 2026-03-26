@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-python-multipart
-gtts
-httpx
-python-docx
-pillow
-pytesseract
-PyMuPDF
