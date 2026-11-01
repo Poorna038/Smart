@@ -5,54 +5,6 @@ export default function TextToSpeech() {
   const [text, setText] = useState("");
   const [lang, setLang] = useState("en");
   const [audio, setAudio] = useState("");
-
-  async function generateSpeech() {
-    if (!text.trim()) return;
-
-    try {
-      const res = await API.post("/ai/speech", {
-        text,
-        lang,
-      });
-
-      setAudio(res.data.audioUrl);
-    } catch {
-      alert("Speech failed");
-    }
-  }
-
-  return (
-    <section className="page">
-      <h1>Text to Speech</h1>
-
-      <div className="tts-box">
-        <textarea
-          placeholder="Enter text..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-
-        <select value={lang} onChange={(e) => setLang(e.target.value)}>
-          <option value="en">English</option>
-          <option value="hi">Hindi</option>
-          <option value="fr">French</option>
-        </select>
-
-        <button onClick={generateSpeech} className="btn primary">
-          Generate Speech
-        </button>
-
-        {audio && <audio controls src={audio} />}
-      </div>
-    </section>
-  );
-}import { useState } from "react";
-import API from "../api";
-
-export default function TextToSpeech() {
-  const [text, setText] = useState("");
-  const [lang, setLang] = useState("en");
-  const [audio, setAudio] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function generateSpeech() {
@@ -66,24 +18,33 @@ export default function TextToSpeech() {
 
     try {
       const res = await API.post("/text-to-speech", {
-        text: text,
+        text: text.trim(),
         lang: lang,
       });
+
+      console.log("TTS response:", res.data);
 
       if (!res.data.success) {
         throw new Error(res.data.error || "Speech generation failed");
       }
 
-      // FastAPI returns the filename
-      const filename = res.data.audio;
+      const filename = res.data.audio || res.data.filename;
 
-      // Build the complete audio URL
-      const audioUrl = `${API.defaults.baseURL}/audio/${filename}`;
+      if (!filename) {
+        throw new Error("Audio file was not returned by the backend.");
+      }
+
+      const audioUrl = `${API_BASE_URL}/audio/${filename}`;
 
       setAudio(audioUrl);
     } catch (error) {
       console.error("Speech error:", error);
-      alert(error.response?.data?.error || "Speech failed");
+
+      alert(
+        error.response?.data?.error ||
+        error.message ||
+        "Speech failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -115,7 +76,6 @@ export default function TextToSpeech() {
           <option value="gu">Gujarati</option>
           <option value="pa">Punjabi</option>
           <option value="ur">Urdu</option>
-
           <option value="fr">French</option>
           <option value="es">Spanish</option>
           <option value="de">German</option>
@@ -136,10 +96,9 @@ export default function TextToSpeech() {
         </button>
 
         {audio && (
-          <div className="audio-result">
-            <p>Speech generated successfully:</p>
+          <div style={{ marginTop: "20px" }}>
             <audio controls src={audio}>
-              Your browser does not support audio.
+              Your browser does not support the audio element.
             </audio>
           </div>
         )}
