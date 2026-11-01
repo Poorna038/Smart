@@ -1,5 +1,5 @@
 import { useState } from "react";
-import API from "../api";
+import API, { API_BASE_URL } from "../api";
 
 export default function TextToSpeech() {
   const [text, setText] = useState("");
@@ -22,25 +22,29 @@ export default function TextToSpeech() {
         lang: lang,
       });
 
-      console.log("TTS response:", res.data);
+      console.log("Speech response:", res.data);
 
       if (!res.data.success) {
-        throw new Error(res.data.error || "Speech generation failed");
+        throw new Error(
+          res.data.error || "Speech generation failed"
+        );
       }
 
       const filename = res.data.audio || res.data.filename;
 
       if (!filename) {
-        throw new Error("Audio file was not returned by the backend.");
+        throw new Error("Audio file was not returned.");
       }
 
       const audioUrl = `${API_BASE_URL}/audio/${filename}`;
 
       setAudio(audioUrl);
+
     } catch (error) {
       console.error("Speech error:", error);
 
       alert(
+        error.response?.data?.detail ||
         error.response?.data?.error ||
         error.message ||
         "Speech failed"
@@ -55,6 +59,7 @@ export default function TextToSpeech() {
       <h1>Text to Speech</h1>
 
       <div className="tts-box">
+
         <textarea
           placeholder="Enter text..."
           value={text}
@@ -102,6 +107,7 @@ export default function TextToSpeech() {
             </audio>
           </div>
         )}
+
       </div>
     </section>
   );
