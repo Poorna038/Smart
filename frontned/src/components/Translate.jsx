@@ -6,30 +6,48 @@ export default function Translate() {
   const [result, setResult] = useState("");
   const [lang, setLang] = useState("es");
   const [file, setFile] = useState(null);
+
   const [loading, setLoading] = useState(false);
+  const [fileLoading, setFileLoading] = useState(false);
 
   async function handleTranslate() {
     if (!text.trim()) {
-      alert("Please enter some text");
+      alert("Please enter some text.");
       return;
     }
 
     setLoading(true);
+    setResult("");
 
     try {
       const res = await API.post("/translate", {
-        text: text,
+        text: text.trim(),
         target: lang,
       });
 
-      if (res.data.success) {
-        setResult(res.data.translated || res.data.result || "");
-      } else {
-        alert(res.data.error || "Translation failed");
+      console.log("Translation response:", res.data);
+
+      const translated =
+        res.data.result ||
+        res.data.translated ||
+        res.data.translation;
+
+      if (!translated) {
+        throw new Error(
+          res.data.error || "Translation was not returned."
+        );
       }
+
+      setResult(translated);
     } catch (error) {
       console.error("Translation error:", error);
-      alert("Translation failed");
+
+      alert(
+        error.response?.data?.detail ||
+        error.response?.data?.error ||
+        error.message ||
+        "Translation failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -37,7 +55,7 @@ export default function Translate() {
 
   async function handleFileTranslate() {
     if (!file) {
-      alert("Please select a document");
+      alert("Please select a document.");
       return;
     }
 
@@ -46,7 +64,8 @@ export default function Translate() {
     formData.append("file", file);
     formData.append("target", lang);
 
-    setLoading(true);
+    setFileLoading(true);
+    setResult("");
 
     try {
       const res = await API.post(
@@ -54,16 +73,32 @@ export default function Translate() {
         formData
       );
 
-      if (res.data.success) {
-        setResult(res.data.result || "");
-      } else {
-        alert(res.data.error || "File translation failed");
+      console.log("Document translation response:", res.data);
+
+      const translated =
+        res.data.result ||
+        res.data.translated ||
+        res.data.translation;
+
+      if (!translated) {
+        throw new Error(
+          res.data.error ||
+          "Translated document result was not returned."
+        );
       }
+
+      setResult(translated);
     } catch (error) {
       console.error("File translation error:", error);
-      alert("File translation failed");
+
+      alert(
+        error.response?.data?.detail ||
+        error.response?.data?.error ||
+        error.message ||
+        "File translation failed"
+      );
     } finally {
-      setLoading(false);
+      setFileLoading(false);
     }
   }
 
@@ -74,7 +109,7 @@ export default function Translate() {
 
       <div className="translate-wrapper">
 
-        {/* LEFT SIDE */}
+        {/* INPUT */}
         <div className="box">
 
           <h3>Input</h3>
@@ -99,18 +134,18 @@ export default function Translate() {
 
             <input
               type="file"
-              accept=".txt,.pdf,.docx"
+              accept=".txt,.docx,.pdf"
               onChange={(e) =>
-                setFile(e.target.files[0])
+                setFile(e.target.files?.[0] || null)
               }
             />
 
             <button
               onClick={handleFileTranslate}
               className="btn secondary"
-              disabled={loading}
+              disabled={fileLoading}
             >
-              {loading
+              {fileLoading
                 ? "Translating..."
                 : "Translate Document"}
             </button>
@@ -119,7 +154,7 @@ export default function Translate() {
 
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* OUTPUT */}
         <div className="box">
 
           <h3>Output Language</h3>
@@ -135,7 +170,18 @@ export default function Translate() {
             <option value="ta">Tamil</option>
             <option value="te">Telugu</option>
             <option value="ml">Malayalam</option>
+            <option value="bn">Bengali</option>
+            <option value="mr">Marathi</option>
+            <option value="gu">Gujarati</option>
+            <option value="pa">Punjabi</option>
+            <option value="ur">Urdu</option>
             <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="ru">Russian</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+            <option value="zh-CN">Chinese</option>
           </select>
 
           <h3>Translated Text</h3>
